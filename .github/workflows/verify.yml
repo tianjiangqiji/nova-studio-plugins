@@ -37,4 +37,12 @@ jobs:
           ls -1 staged
 
       - name: Verify
-        run: NOVA_PLUGINS_DIR="$PWD/staged" node host/backend/plugin-runtime/verify.js
+        run: |
+          VERIFIER=host/backend/plugin-runtime/verify.js
+          # 宿主的插件运行时还没发布到默认分支时，这里跳过而不是红一片——
+          # 红叉应该只代表「插件包写错了」。宿主一发布，这个分支就自动失效。
+          if [ ! -f "$VERIFIER" ]; then
+            echo "::warning::宿主仓库的默认分支还没有 $VERIFIER，本次跳过契约校验"
+            exit 0
+          fi
+          NOVA_PLUGINS_DIR="$PWD/staged" node "$VERIFIER"
