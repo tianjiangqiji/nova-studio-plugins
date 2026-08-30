@@ -1,0 +1,45 @@
+{
+  "apiVersion": 1,
+  "id": "example-video",
+  "name": "示例视频插件",
+  "version": "1.0.0",
+  "kind": "video",
+  "mode": "declarative",
+  "author": "your-name",
+  "description": "复制这个目录改成你自己的上游。这份模板本身是可校验、可通过 fixtures 的最小完整插件。",
+  "homepage": "https://example.test",
+  "outputs": ["video"],
+  "credential": {
+    "source": "client",
+    "label": "Example API Key",
+    "defaultBaseUrl": "https://api.example.test",
+    "helpUrl": "https://example.test/docs"
+  },
+  "permissions": {
+    "hosts": ["api.example.test"]
+  },
+  "media": {
+    "images": { "maxCount": 2 }
+  },
+  "runtime": {
+    "submitTimeoutMs": 60000,
+    "pollIntervalMs": 10000,
+    "maxPollMs": 900000
+  },
+  "models": [
+    {
+      "id": "example-video-720p",
+      "name": "Example Video 720P",
+      "shortName": "Example 720P",
+      "description": "标准清晰度",
+      "price": { "unit": "per-second", "amount": 0.1, "currency": "CNY" }
+    },
+    {
+      "id": "example-video-1080p",
+      "name": "Example Video 1080P",
+      "shortName": "Example 1080P",
+      "description": "高清",
+      "price": { "unit": "per-second", "amount": 0.18, "currency": "CNY" }
+    }
+  ]
+}

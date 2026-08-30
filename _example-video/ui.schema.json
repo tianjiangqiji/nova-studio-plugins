@@ -1,0 +1,63 @@
+{
+  "apiVersion": 1,
+  "priceQuantityField": "seconds",
+  "layout": {
+    "toolbar": ["$model", "$resolution", "seconds"],
+    "body": ["refImage", "prompt"]
+  },
+  "modelSelector": {
+    "label": "模型与档位",
+    "familyLabel": "Example Video",
+    "familyDescription": "按秒计费 · 4–8 秒 · 720P / 1080P",
+    "facets": [
+      { "key": "resolution", "label": "分辨率", "icon": "maximize" }
+    ],
+    "facetOptions": {
+      "resolution": [
+        { "value": "720P", "label": "720P", "description": "标准清晰度" },
+        { "value": "1080P", "label": "1080P", "description": "高清" }
+      ]
+    },
+    "variants": [
+      { "model": "example-video-720p", "resolution": "720P" },
+      { "model": "example-video-1080p", "resolution": "1080P" }
+    ]
+  },
+  "fields": [
+    {
+      "key": "seconds",
+      "type": "select-grid",
+      "label": "视频时长",
+      "icon": "clock",
+      "columns": 3,
+      "suffix": "秒",
+      "default": 4,
+      "options": [
+        { "value": 4, "label": "4" },
+        { "value": 6, "label": "6" },
+        { "value": 8, "label": "8" }
+      ]
+    },
+    {
+      "key": "refImage",
+      "type": "media",
+      "kind": "images",
+      "label": "参考图片",
+      "icon": "layers",
+      "style": "thumbnail",
+      "maxCount": 2,
+      "hint": "可选。最多 2 张，作为首帧或风格参考。"
+    },
+    {
+      "key": "prompt",
+      "type": "textarea",
+      "label": "提示词",
+      "icon": "sparkles",
+      "required": true,
+      "maxLength": 1000,
+      "rows": 9,
+      "placeholder": "描述你想要的画面、镜头运动与氛围",
+      "presets": ["电影感光影", "缓慢推镜", "航拍俯视"]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "model": "example-video-1080p",
+  "method": "POST",
+  "url": "https://upstream.test/v1/video/generate",
+  "body": {
+    "model": "example-video-1080p",
+    "prompt": "海边日落，镜头缓慢推近",
+    "duration": 6,
+    "resolution": "1080P"
+  }
+}

@@ -1,0 +1,40 @@
+name: verify plugins
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout plugins
+        uses: actions/checkout@v4
+        with:
+          path: plugins-repo
+
+      - name: Checkout host (for the verifier)
+        uses: actions/checkout@v4
+        with:
+          repository: tianjiangqiji/nova-image-studio
+          path: host
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 校验器只读 JSON，不需要装依赖。
+      # manifest.id 必须与目录名一致，而 _ 前缀的目录宿主会跳过，
+      # 所以这里统一去掉下划线再验，模板也就不会腐烂。
+      - name: Stage plugins
+        run: |
+          mkdir -p staged
+          for dir in plugins-repo/*/; do
+            name=$(basename "$dir")
+            [ "$name" = ".github" ] && continue
+            cp -r "$dir" "staged/${name#_}"
+          done
+          ls -1 staged
+
+      - name: Verify
+        run: NOVA_PLUGINS_DIR="$PWD/staged" node host/backend/plugin-runtime/verify.js
