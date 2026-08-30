@@ -1,50 +1,56 @@
-# 插件模板
+# Plugin template
 
-复制这个目录、改成你自己的上游，就是一个可用的插件包。
+**English** · [简体中文](README.zh-CN.md)
+
+Copy this directory, point it at your own upstream, and you have a working plugin pack.
 
 ```bash
 cp -r _example-video my-plugin
 ```
 
-目录名以 `_` 或 `.` 开头的会被宿主**跳过且不报错**，所以这份模板可以安全地留在
-`backend/plugins/` 里当参考——它不会出现在界面的插件列表里。改名成不带 `_` 的
-名字，它才会被加载。
+Directories starting with `_` or `.` are **skipped by the host without error**, so this template can
+safely live inside `backend/plugins/` as a reference — it won't appear in the plugin list. Rename it to
+something without the underscore and it gets loaded.
 
-> **`manifest.id` 必须与目录名完全一致**，否则加载会失败并明确报出这一点。
-> ID 的格式是 `^[a-z0-9][a-z0-9-]{1,63}$`（小写字母、数字、短横）。
-> 所以 `cp -r _example-video my-plugin` 之后，第一件事就是把 `manifest.json`
-> 里的 `id` 改成 `my-plugin`。
+> **`manifest.id` must exactly match the directory name**, otherwise loading fails and says so.
+> The ID format is `^[a-z0-9][a-z0-9-]{1,63}$` (lowercase letters, digits, hyphens).
+> So right after `cp -r _example-video my-plugin`, the first thing to do is set `id` to `my-plugin`
+> in `manifest.json`.
 
-## 改哪些地方
+## What to change
 
-按这个顺序改，每步都能单独验证：
+In this order — each step can be validated on its own:
 
-1. **`manifest.json`** — `id`（**必须与目录名一致**）、
-   `name`、`author`、`homepage`、`credential.defaultBaseUrl`、
-   `permissions.hosts`（**只填上游 API 的域名**，产物 CDN 不用填）、
-   `models[]`（模型 ID 要与上游真实 ID 一致，`price` 不确定就整个删掉）。
-2. **`ui.schema.json`** — `modelSelector.variants` 是「facet 组合 → 模型 ID」的事实表，
-   先把它列全，界面的联动是宿主从这张表算出来的。然后按需增删 `fields`。
-3. **`provider.json`** — 上游的请求体形状、状态词表、进度字段、产物 URL 在哪几层。
-4. **`fixtures/`** — 把上游真实的响应体贴进 `upstream-*.json`，写出你期望的
-   `expected-*.json`。这一步是唯一能在不消耗额度的前提下确认插件是对的方式。
+1. **`manifest.json`** — `id` (**must match the directory name**), `name`, `author`, `homepage`,
+   `credential.defaultBaseUrl`, `permissions.hosts` (**only the upstream API's domains**; artifact CDNs
+   don't belong here), and `models[]` (model IDs must match the upstream's real IDs; if you're unsure
+   about pricing, delete the `price` field entirely).
+2. **`ui.schema.json`** — `modelSelector.variants` is the factual table mapping facet combinations to
+   model IDs. Fill it in completely first; the host derives the form's interlocking behaviour from it.
+   Then add or remove `fields` as needed.
+3. **`provider.json`** — the upstream's request body shape, status vocabulary, progress field, and which
+   paths hold the result URL.
+4. **`fixtures/`** — paste the upstream's real responses into `upstream-*.json` and write the
+   `expected-*.json` you expect. This is the only way to confirm a plugin is correct without spending
+   credits.
 
-## 验证
+## Verification
 
-在宿主仓库里跑（`NOVA_PLUGINS_DIR` 指向放着你的插件的目录）：
+Run this from the host repository, with `NOVA_PLUGINS_DIR` pointing at the directory holding your plugin:
 
 ```bash
 NOVA_PLUGINS_DIR=/path/to/nova-studio-plugins node backend/plugin-runtime/verify.js
-# 只验一个插件：
+# just one plugin:
 NOVA_PLUGINS_DIR=/path/to/nova-studio-plugins node backend/plugin-runtime/verify.js my-plugin
 ```
 
-它会做两件事：JSON 结构校验（字段缺失会指出具体路径），以及跑 `fixtures/` 里的
-契约用例——用的是线上同一套归一化代码，所以 fixtures 通过就等于线上行为通过。
+It does two things: JSON structural validation (missing fields are reported with their exact path), and
+the contract cases under `fixtures/` — using the same normalization code that runs in production, so
+passing fixtures means passing in production.
 
-## 这份模板对应的假想上游
+## The fictional upstream this template targets
 
-`https://api.example.test`，两个模型（720P / 1080P），请求形如：
+`https://api.example.test`, two models (720P / 1080P), requests shaped like:
 
 ```
 POST /v1/video/generate
@@ -55,4 +61,5 @@ GET /v1/video/tasks/ex-0001
 → { "status": "completed", "progress": 100, "video_url": "...", "duration": 6 }
 ```
 
-字段的完整语义见宿主仓库的 [`docs/plugins/`](https://github.com/tianjiangqiji/nova-image-studio/tree/main/docs/plugins)。
+For the full meaning of every field, see the host repository's
+[`docs/plugins/`](https://github.com/tianjiangqiji/nova-image-studio/tree/main/docs/plugins).

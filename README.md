@@ -1,44 +1,48 @@
 # Nova Studio Plugins
 
-[Nova Studio](https://github.com/tianjiangqiji/nova-image-studio) 视频插件包的合集。
+**English** · [简体中文](README.zh-CN.md)
 
-一个插件包就是**三个 JSON 文件的目录**，没有可执行代码、不需要编译、不需要安装依赖。
-放进宿主的 `backend/plugins/` 就能用。
+Video plugin packs for [Nova Studio](https://github.com/tianjiangqiji/nova-image-studio).
+
+A plugin pack is **a directory of three JSON files**. No executable code, no build step, no dependencies to install. Drop it into the host's `backend/plugins/` and it works.
 
 ```
 my-plugin/
-├── manifest.json      # 我是谁、有哪些模型、价格、允许访问哪些主机
-├── ui.schema.json     # 表单长什么样（宿主用自己的组件渲染）
-├── provider.json      # 怎么发请求、怎么读状态与产物
-└── fixtures/          # 离线契约用例（可选，但强烈建议）
+├── manifest.json      # who I am, which models, prices, which hosts I may reach
+├── ui.schema.json     # what the form looks like (rendered by the host's own components)
+├── provider.json      # how to call the upstream, how to read status and results
+└── fixtures/          # offline contract cases (optional, but strongly recommended)
 ```
 
-## 仓库里有什么
+## What's in here
 
-| 目录 | 说明 |
+| Directory | Description |
 | --- | --- |
-| [`_example-video/`](_example-video/) | 最小完整插件模板。可校验、fixtures 可通过。复制它开始写你自己的。 |
+| [`_example-video/`](_example-video/) | Minimal complete plugin template. Validates cleanly, fixtures pass. Copy it to start your own. |
 
-> `_example-video` 以下划线开头，宿主加载时会**跳过且不报错**，所以整个仓库可以直接
-> clone 进 `backend/plugins/`，模板不会出现在界面的插件列表里。
+> `_example-video` starts with an underscore, so the host **skips it without error**. That means the
+> whole repository can be cloned straight into `backend/plugins/` and the template will never show up
+> in the plugin list.
 
-官方维护的插件（如 Sora、SeedDance）会陆续加进来。参考实现
-[`ccode-h3`](https://github.com/tianjiangqiji/nova-image-studio/tree/main/backend/plugins/ccode-h3)
-留在宿主仓库里——它同时是协议的测试基线，宿主的单元测试直接读它的真实 JSON。
+Officially maintained plugins (Sora, SeedDance, …) will be added over time. The reference
+implementation [`ccode-h3`](https://github.com/tianjiangqiji/nova-image-studio/tree/main/backend/plugins/ccode-h3)
+stays in the host repository — it doubles as the protocol's test baseline, and the host's unit tests
+read its real JSON from disk.
 
-## 安装
+## Installing
 
-插件的安装就是**把目录放进宿主的插件文件夹**，由管理员在服务器上操作。宿主界面
-只能查看已装插件、填写各自的调用凭据，装不了也删不了插件。
+Installing a plugin means **placing a directory in the host's plugin folder**, done by an admin on the
+server. The host UI can only list what's installed and let each user fill in their own credentials; it
+cannot install or remove plugins.
 
-整个合集：
+The whole collection:
 
 ```bash
 cd /path/to/nova-image-studio/backend/plugins
 git clone https://github.com/tianjiangqiji/nova-studio-plugins.git .
 ```
 
-只要其中一个插件（sparse checkout）：
+Just one plugin (sparse checkout):
 
 ```bash
 cd /path/to/nova-image-studio/backend/plugins
@@ -46,22 +50,22 @@ git clone --filter=blob:none --sparse https://github.com/tianjiangqiji/nova-stud
 cd tmp && git sparse-checkout set some-plugin && mv some-plugin .. && cd .. && rm -rf tmp
 ```
 
-或者最朴素的方式——下载 zip，把插件目录拖进 `backend/plugins/`。
+Or the simplest way — download the zip and drag the plugin directory into `backend/plugins/`.
 
-装完**不用重启后端**：设置 → 插件里点一下刷新，宿主会重扫目录。
+**No backend restart needed**: hit Reload under Settings → Plugins and the host rescans the directory.
 
-## 写一个插件
+## Writing a plugin
 
 ```bash
 cp -r _example-video my-plugin
 ```
 
-然后照 [`_example-video/README.md`](_example-video/README.md) 改四个地方。第一件事是把
-`manifest.json` 的 `id` 改成 `my-plugin`——**`id` 必须与目录名一致**。核心思路一句话：
-**不写规则，写事实。**
+Then follow [`_example-video/README.md`](_example-video/README.md) and change four things. Start by
+setting `manifest.json`'s `id` to `my-plugin` — **the `id` must match the directory name**. The core
+idea in one line: **don't write rules, write facts.**
 
-上游往往有一堆模型 ID，它们其实是几个维度的组合（档位 × 分辨率）。你把每个真实存在的
-组合列成一行 `variant`：
+An upstream usually exposes a pile of model IDs that are really combinations of a few dimensions
+(tier × resolution). List every combination that actually exists as one `variant` row:
 
 ```json
 "variants": [
@@ -71,13 +75,14 @@ cp -r _example-video my-plugin
 ]
 ```
 
-宿主就能自己算出：该提交哪个模型 ID、选了 Lite 之后分辨率里还剩哪些选项、切换档位后
-把不存在的取值收敛到哪里。上例中 Lite 没有 1080P，于是选中 Lite 后分辨率只剩一个
-选项并自动隐藏——这些都不需要你写任何条件。
+From that table alone the host works out which model ID to submit, which resolutions remain once Lite
+is picked, and where to land a value that stopped existing after switching tiers. In the example above
+Lite has no 1080P, so selecting Lite leaves a single resolution option which then hides itself — none
+of that requires you to write a condition.
 
-## 验证：不花额度就能确认插件是对的
+## Verification: confirm the plugin is right without spending credits
 
-在宿主仓库里跑校验器，用 `NOVA_PLUGINS_DIR` 指向这个仓库：
+Run the host's verifier with `NOVA_PLUGINS_DIR` pointed at this repository:
 
 ```bash
 git clone https://github.com/tianjiangqiji/nova-image-studio.git
@@ -85,57 +90,65 @@ NOVA_PLUGINS_DIR=/path/to/nova-studio-plugins \
   node nova-image-studio/backend/plugin-runtime/verify.js
 ```
 
-它做两件事：
+It does two things:
 
-1. **结构校验** — 字段缺失、类型不对、`variants` 少写了某个 facet、模型 ID 没在
-   `manifest.models` 里申报过，都会指出具体路径和行号。
-2. **契约用例** — 跑 `fixtures/` 里的每个用例：`input.json` 求出请求体，与
-   `expected-request.json` 深比较；`upstream-poll.json` 过一遍归一化，与
-   `expected-result.json` 深比较。
+1. **Structural validation** — missing fields, wrong types, a `variant` missing one of the facets, a
+   model ID never declared in `manifest.models`: each is reported with its exact path.
+2. **Contract cases** — every case under `fixtures/`: `input.json` is resolved into a request body and
+   deep-compared against `expected-request.json`; `upstream-poll.json` goes through normalization and
+   is deep-compared against `expected-result.json`.
 
-第 2 步用的是**线上同一个归一化函数**，不是测试里另写一份，所以 fixtures 通过就等于
-线上行为通过。这也意味着你可以在完全没有 API Key 的情况下把插件写完、验对。
+Step 2 runs **the same normalization function production uses**, not a reimplementation in the tests,
+so passing fixtures means passing in production. It also means you can write and validate an entire
+plugin without holding an API key.
 
-本仓库的 CI 对每次推送都跑这套校验。（宿主的插件运行时尚未发布到默认分支之前，
-CI 会打一条 warning 并跳过——红叉只代表插件包本身写错了。）
+This repository's CI runs that check on every push. (Until the host's plugin runtime lands on its
+default branch, CI emits a warning and skips — a red X only ever means the plugin pack itself is wrong.)
 
-## 文档
+## Documentation
 
-完整协议文档在宿主仓库
-[`docs/plugins/`](https://github.com/tianjiangqiji/nova-image-studio/tree/main/docs/plugins)：
+The full protocol docs live in the host repository under
+[`docs/plugins/`](https://github.com/tianjiangqiji/nova-image-studio/tree/main/docs/plugins)
+(written in Chinese):
 
-| 文档 | 内容 |
+| Document | Contents |
 | --- | --- |
-| [quickstart.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/quickstart.md) | 30 分钟从零写出第一个插件 |
-| [manifest.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/manifest.md) | `manifest.json` 每个字段 |
-| [ui-schema.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/ui-schema.md) | 表单描述、facet 矩阵、可见性词汇 |
-| [provider.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/provider.md) | 请求模板 DSL、状态与产物提取 |
-| [lifecycle.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/lifecycle.md) | 任务生命周期、轮询与超时语义 |
-| [errors.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/errors.md) | 错误码与排查 |
-| [testing.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/testing.md) | fixtures 怎么写 |
-| [cookbook.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/cookbook.md) | 「上游长这样，schema 该怎么写」对照例子 |
-| [LLM.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/LLM.md) | **喂给 AI 的单文件协议摘要** |
+| [quickstart.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/quickstart.md) | First plugin from scratch in 30 minutes |
+| [manifest.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/manifest.md) | Every `manifest.json` field |
+| [ui-schema.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/ui-schema.md) | Form description, facet matrix, visibility vocabulary |
+| [provider.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/provider.md) | Request template DSL, status and result extraction |
+| [lifecycle.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/lifecycle.md) | Task lifecycle, polling and timeout semantics |
+| [errors.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/errors.md) | Error codes and troubleshooting |
+| [testing.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/testing.md) | How to write fixtures |
+| [cookbook.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/cookbook.md) | "The upstream looks like this, so the schema looks like that" |
+| [LLM.md](https://github.com/tianjiangqiji/nova-image-studio/blob/main/docs/plugins/LLM.md) | **Single-file protocol summary to feed an AI** |
 
-如果你想让 AI 帮你写插件：把 `LLM.md` 和上游的 API 文档一起给它，它能直接产出三个
-JSON 文件。写完用上面的校验器验一遍即可。
+If you want an AI to write the plugin: hand it `LLM.md` together with the upstream's API docs and it can
+produce all three JSON files directly. Validate the result with the verifier above.
 
-## 提交插件
+## Submitting a plugin
 
-欢迎 PR。合并前会看这几点：
+PRs welcome. Before merging we look at:
 
-- `NOVA_PLUGINS_DIR=... node .../verify.js <your-plugin>` 通过
-- 至少 3 个 fixtures：一个正常完成、一个上游失败、一个带参考素材
-- `permissions.hosts` 只列上游 API 的域名，不要图省事列通配或产物 CDN
-- 不含任何 API Key、账号、内网地址
-- `price` 要么写真实申报价，要么整个字段删掉（不写就不显示价格，不会显示 ¥0.00）
+- `NOVA_PLUGINS_DIR=... node .../verify.js <your-plugin>` passes
+- At least 3 fixtures: one normal completion, one upstream failure, one with reference media
+- `permissions.hosts` lists only the upstream API's domains — no wildcards, no artifact CDNs
+- No API keys, accounts or internal addresses anywhere in the pack
+- `price` either states the real declared price or is omitted entirely (omitted means no price is shown, never ¥0.00)
 
-## 安全说明
+## Security notes
 
-- 插件包是**纯数据**，宿主不会 eval 它的任何内容。协议刻意不支持可执行代码。
-- 插件只能访问 `permissions.hosts` 里申报过的主机；私有网段与回环地址一律拒绝（SSRF 防线）。
-- API Key 存在用户浏览器本地，服务器不持有任何人的密钥；插件包里当然也不该有。
-- 装插件前建议 `cat` 一遍这三个 JSON——纯 JSON 的意义就在于一眼能审完。
+- Plugin packs are **pure data**; the host never evals any part of them. The protocol deliberately has
+  no support for executable code.
+- A plugin may only reach hosts declared in `permissions.hosts`; private ranges and loopback addresses
+  are always refused (SSRF defence).
+- API keys live in the user's browser — the server holds nobody's key, and a plugin pack certainly
+  shouldn't contain one.
+- Before installing, `cat` the three JSON files. Being plain JSON is the whole point: you can audit a
+  pack at a glance.
 
-## 许可
+## License
 
-AGPL-3.0，与宿主项目一致。见 [LICENSE](LICENSE)。
+AGPL-3.0, matching the host project. See [LICENSE](LICENSE).
+
+
