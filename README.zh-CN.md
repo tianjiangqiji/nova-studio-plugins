@@ -2,36 +2,41 @@
 
 [English](README.md) · **简体中文**
 
-[Nova Studio](https://github.com/tianjiangqiji/nova-image-studio) 视频插件包的合集。
+[Nova Studio](https://github.com/tianjiangqiji/nova-image-studio) 视频插件合集与开发者规范。
 
-一个插件包就是**三个 JSON 文件的目录**，没有可执行代码、不需要编译、不需要安装依赖。
-放进宿主的 `backend/plugins/` 就能用。
+Nova Studio 支持两种插件开发模式，推荐使用**极简双文件模式**：
 
+### 1. 极简 JS 驱动模式（推荐）
+只需**一个描述文件 + 一个 JS 纯函数驱动**，无需手写繁琐的 `ui.schema.json` 与 `provider.json`。UI 由宿主智能合成器自动推导，前端零侵入。
 ```
 my-plugin/
-├── manifest.json      # 我是谁、有哪些模型、价格、允许访问哪些主机
-├── ui.schema.json     # 表单长什么样（宿主用自己的组件渲染）
-├── provider.json      # 怎么发请求、怎么读状态与产物
-└── fixtures/          # 离线契约用例（可选，但强烈建议）
+├── manifest.json      # 插件元信息、支持模型、时长/比例、权限白名单
+├── index.js           # 纯函数驱动：组装请求、轮询、解析产物
+└── fixtures/          # 离线自检用例（可选）
+```
+
+### 2. 经典三 JSON 声明式模式（兼容）
+```
+my-plugin/
+├── manifest.json      # 插件信息
+├── ui.schema.json     # 手写表单渲染结构
+├── provider.json      # 基于字符串模板的请求与提取规则
+└── fixtures/          # 离线用例
 ```
 
 ## 仓库里有什么
 
-| 目录 | 说明 |
-| --- | --- |
-| [`_example-video/`](_example-video/) | 最小完整插件模板。可校验、fixtures 可通过。复制它开始写你自己的。 |
+| 目录 | 模式 | 说明 |
+| --- | --- | --- |
+| [`_template-video/`](_template-video/) | 极简双文件 | **官方推荐模板**。基于 JS 纯函数驱动，自动推导 UI，复制它开始开发。 |
+| [`sora/`](sora/) | 极简双文件 | **OpenAI Sora 实战插件**。标准 30 行 JS 驱动，包含完整 fixtures。 |
+| [`_example-video/`](_example-video/) | 三 JSON 声明式 | 经典声明式模板（兼容原有规范）。 |
 
-> `_example-video` 以下划线开头，宿主加载时会**跳过且不报错**，所以整个仓库可以直接
-> clone 进 `backend/plugins/`，模板不会出现在界面的插件列表里。
-
-官方维护的插件（如 Sora、SeedDance）会陆续加进来。参考实现
-[`ccode-h3`](https://github.com/tianjiangqiji/nova-image-studio/tree/main/backend/plugins/ccode-h3)
-留在宿主仓库里——它同时是协议的测试基线，宿主的单元测试直接读它的真实 JSON。
+> 以 `_` 开头的目录在宿主扫描时会自动跳过，因此可以将整个仓库直接克隆到 `backend/plugins/` 下。
 
 ## 安装
 
-插件的安装就是**把目录放进宿主的插件文件夹**，由管理员在服务器上操作。宿主界面
-只能查看已装插件、填写各自的调用凭据，装不了也删不了插件。
+插件的安装就是**把目录放进宿主的 `backend/plugins/` 文件夹**，由管理员在服务器上操作。宿主界面只能查看已装插件、填写各自的调用凭据，装不了也删不了插件。
 
 整个合集：
 
@@ -40,23 +45,32 @@ cd /path/to/nova-image-studio/backend/plugins
 git clone https://github.com/tianjiangqiji/nova-studio-plugins.git .
 ```
 
-只要其中一个插件（sparse checkout）：
+只要其中一个插件（例如 `sora`）：
 
 ```bash
 cd /path/to/nova-image-studio/backend/plugins
 git clone --filter=blob:none --sparse https://github.com/tianjiangqiji/nova-studio-plugins.git tmp
-cd tmp && git sparse-checkout set some-plugin && mv some-plugin .. && cd .. && rm -rf tmp
+cd tmp && git sparse-checkout set sora && mv sora .. && cd .. && rm -rf tmp
 ```
 
-或者最朴素的方式——下载 zip，把插件目录拖进 `backend/plugins/`。
+或者最朴素的方式——下载 zip，把 `sora/` 目录拖进 `backend/plugins/`。
 
-装完**不用重启后端**：设置 → 插件里点一下刷新，宿主会重扫目录。
+装完**不用重启后端**：设置 → 插件里点一下「刷新」，宿主会重扫目录。
 
-## 写一个插件
+## 极简开发指南（推荐）
 
 ```bash
-cp -r _example-video my-plugin
+cp -r _template-video my-plugin
 ```
+
+详细编写规范请直接参阅 [`_template-video/README.zh-CN.md`](_template-video/README.zh-CN.md)。
+
+### 前端 UI 兼容与新模式扩展原理
+1. **为什么不需要写 React 组件？**
+   视频生成的核心交互高度收敛（提示词、模型、比例、时长、垫图）。插件严禁向宿主注入 DOM/React 组件（防止 XSS 攻击、样式冲突及环境割裂）。
+2. **新模式（如运镜、首尾帧、参数调节）如何支持？**
+   通过“数据驱动”机制，在 `manifest.json` 的 `features.customControls` 中声明控件即可。后端智能合成器会将控件映射为合规的 UI 协议并下发给宿主渲染，用户选择的值直接通过 `ctx.fields.<key>` 传入你的 `index.js`！
+
 
 然后照 [`_example-video/README.zh-CN.md`](_example-video/README.zh-CN.md) 改四个地方。第一件事是把
 `manifest.json` 的 `id` 改成 `my-plugin`——**`id` 必须与目录名一致**。核心思路一句话：

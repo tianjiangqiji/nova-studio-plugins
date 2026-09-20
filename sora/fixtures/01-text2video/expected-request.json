@@ -1,0 +1,11 @@
+{
+  "model": "sora",
+  "method": "POST",
+  "url": "https://upstream.test/v1/videos",
+  "body": {
+    "model": "sora",
+    "prompt": "A stylish woman walks down a Tokyo street filled with warm glowing neon",
+    "size": "1280x720",
+    "duration": 5
+  }
+}

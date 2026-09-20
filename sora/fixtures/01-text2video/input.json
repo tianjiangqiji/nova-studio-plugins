@@ -1,0 +1,8 @@
+{
+  "model": "sora",
+  "fields": {
+    "prompt": "A stylish woman walks down a Tokyo street filled with warm glowing neon",
+    "aspectRatio": "16:9",
+    "seconds": 5
+  }
+}

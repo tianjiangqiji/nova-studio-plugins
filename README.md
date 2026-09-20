@@ -2,38 +2,41 @@
 
 **English** · [简体中文](README.zh-CN.md)
 
-Video plugin packs for [Nova Studio](https://github.com/tianjiangqiji/nova-image-studio).
+Video plugin packs and developer guidelines for [Nova Studio](https://github.com/tianjiangqiji/nova-image-studio).
 
-A plugin pack is **a directory of three JSON files**. No executable code, no build step, no dependencies to install. Drop it into the host's `backend/plugins/` and it works.
+Nova Studio supports two plugin development modes, with the **Minimal Two-File Mode** recommended:
 
+### 1. Minimal JS Driver Mode (Recommended)
+Only **1 manifest file + 1 pure JS driver file**. No tedious `ui.schema.json` or `provider.json` needed. The UI is synthesized automatically by the backend without front-end intrusion.
 ```
 my-plugin/
-├── manifest.json      # who I am, which models, prices, which hosts I may reach
-├── ui.schema.json     # what the form looks like (rendered by the host's own components)
-├── provider.json      # how to call the upstream, how to read status and results
-└── fixtures/          # offline contract cases (optional, but strongly recommended)
+├── manifest.json      # Metadata, models, durations/aspect ratios, allowed hosts
+├── index.js           # Pure JS driver: build submit, query status, parse results
+└── fixtures/          # Offline contract fixtures (optional)
+```
+
+### 2. Classic Declarative Mode (Supported)
+```
+my-plugin/
+├── manifest.json      # Metadata
+├── ui.schema.json     # Custom form layout
+├── provider.json      # Template-based request and extraction definitions
+└── fixtures/          # Offline fixtures
 ```
 
 ## What's in here
 
-| Directory | Description |
-| --- | --- |
-| [`_example-video/`](_example-video/) | Minimal complete plugin template. Validates cleanly, fixtures pass. Copy it to start your own. |
+| Directory | Mode | Description |
+| --- | --- | --- |
+| [`_template-video/`](_template-video/) | Two-File Driver | **Official recommended template**. Pure JS driver, auto UI synthesis. Copy it to start. |
+| [`sora/`](sora/) | Two-File Driver | **OpenAI Sora production plugin**. Clean 30-line JS driver with full fixtures. |
+| [`_example-video/`](_example-video/) | Declarative | Classic 3-JSON declarative template. |
 
-> `_example-video` starts with an underscore, so the host **skips it without error**. That means the
-> whole repository can be cloned straight into `backend/plugins/` and the template will never show up
-> in the plugin list.
-
-Officially maintained plugins (Sora, SeedDance, …) will be added over time. The reference
-implementation [`ccode-h3`](https://github.com/tianjiangqiji/nova-image-studio/tree/main/backend/plugins/ccode-h3)
-stays in the host repository — it doubles as the protocol's test baseline, and the host's unit tests
-read its real JSON from disk.
+> Directories prefixed with `_` are automatically ignored by the host during scanning.
 
 ## Installing
 
-Installing a plugin means **placing a directory in the host's plugin folder**, done by an admin on the
-server. The host UI can only list what's installed and let each user fill in their own credentials; it
-cannot install or remove plugins.
+Installing a plugin means **placing a directory in the host's `backend/plugins/` folder**, done by an admin on the server. The host UI can only list what's installed and let each user fill in their own credentials; it cannot install or remove plugins.
 
 The whole collection:
 

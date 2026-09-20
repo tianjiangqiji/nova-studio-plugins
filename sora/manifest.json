@@ -1,0 +1,42 @@
+{
+  "apiVersion": 1,
+  "id": "sora",
+  "name": "Sora 官方/中转视频生成",
+  "version": "1.0.0",
+  "kind": "video",
+  "mode": "script",
+  "description": "基于 OpenAI Sora 官方及兼容网关的极简 JS 视频插件",
+  "author": "Nova Team",
+  "homepage": "https://openai.com/sora",
+  "credential": {
+    "source": "client",
+    "label": "OpenAI API Key",
+    "defaultBaseUrl": "https://api.openai.com",
+    "helpUrl": "https://platform.openai.com/api-keys"
+  },
+  "permissions": {
+    "hosts": [
+      "api.openai.com",
+      "upstream.test"
+    ]
+  },
+  "models": [
+    {
+      "id": "sora",
+      "name": "Sora 1.0",
+      "price": { "unit": "per-second", "amount": 0.1 }
+    },
+    {
+      "id": "sora-turbo",
+      "name": "Sora Turbo",
+      "price": { "unit": "per-second", "amount": 0.05 }
+    }
+  ],
+  "media": {
+    "images": { "maxCount": 1, "label": "首帧图", "hint": "可上传首帧作为视频起始画面" }
+  },
+  "features": {
+    "aspectRatios": ["16:9", "9:16", "1:1"],
+    "durations": [5, 10]
+  }
+}

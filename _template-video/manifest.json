@@ -1,0 +1,36 @@
+{
+  "apiVersion": 1,
+  "id": "_template-video",
+  "name": "视频模型极简模板",
+  "version": "1.0.0",
+  "kind": "video",
+  "mode": "script",
+  "description": "基于极简 JS 驱动的视频生成插件模板（1 个 manifest.json + 1 个 index.js）",
+  "author": "Nova Team",
+  "credential": {
+    "source": "client",
+    "label": "API Key",
+    "defaultBaseUrl": "https://api.upstream.example.com",
+    "helpUrl": "https://example.com/api-keys"
+  },
+  "permissions": {
+    "hosts": [
+      "api.upstream.example.com"
+    ]
+  },
+  "models": [
+    {
+      "id": "my-video-model-v1",
+      "name": "模型标准版",
+      "price": { "unit": "per-second", "amount": 0.05 }
+    }
+  ],
+  "media": {
+    "images": { "maxCount": 1, "label": "参考图片", "hint": "可选垫图生成图生视频" },
+    "videos": { "maxCount": 0 }
+  },
+  "features": {
+    "aspectRatios": ["16:9", "9:16", "1:1"],
+    "durations": [5, 10]
+  }
+}
